@@ -10,6 +10,9 @@ import smtplib
 import tkinter as tk
 import calendar
 import pyjokes
+import psutil
+from pywikihow import WikiHow, search_wikihow
+import speedtest
 
 paths={ 
     "notepad" : "C:\\Windows\\notepad.exe",
@@ -65,6 +68,8 @@ def play_on_youtube(video):
     kit.playonyt(video)
 def search_on_google(text):
     kit.search(text)
+def search_wikihow(query,max_results=10,lang='en'):
+    return list(WikiHow.search(query,max_results,lang))
 
 if __name__ == "__main__":
     wishMe()
@@ -111,10 +116,56 @@ if __name__ == "__main__":
             speak("what you want to search")
             text = takeCommand().lower()
             search_on_google(text)
-        elif 'joke' in query:
-            speak("ok")
-            tell_joke()
 
+        elif 'check battery percentage' in query:
+            battery = psutil.sensors_battery()
+            percentage = battery.percent
+            speak(f"sir our system have{percentage} percent battery")
+        
+        
+        elif 'how to ' in query:
+            speak("how to do mode is activated !")
+            while True:
+                speak("what do you want to know sir !")
+                how=takeCommand()
+                try:
+                    if 'exit' in how or 'close' in how or 'quit' in how or 'leave' in how:
+                        speak("ok sir! The how to do mode is closed")
+                    else:
+                        how=takeCommand()
+                        max_results = 1
+                        how_to= search_wikihow(how, max_results)
+                        assert len(how_to)==1
+                        how_to[0].print()
+                        speak(how_to[0].summary)
+                except Exception as e:
+                    speak("sorry sir ! i am not able to find this")
+
+        elif 'internet speed' in query:
+            st = speedtest.Speedtest()
+            d1 = st.download()
+            up = st.upload()
+            speak(f"sir we have {d1} bit per second downloading speed and {up} bit per second uploading speed")
+
+        elif ' tell jokes ' or 'jokes' in query:
+            joke = pyjokes.get_joke()
+            print(joke)
+            joke = pyjokes.get_joke(language='de')
+            print(joke)
+            joke = pyjokes.get_joke(category='neutral')
+            print(joke)
+        '''while True:
+    command = input("Type 'joke' for a programming joke or 'exit' to quit: ").strip().lower()
+    if command == 'joke':
+        print(pyjokes.get_joke())
+    elif command == 'exit':
+        break
+    else:
+        print("Unknown command. Try 'joke' or 'exit'.")'''
+
+        
+
+        
 
         
         
