@@ -1,6 +1,7 @@
 from pickle import TRUE
 import speech_recognition as sr
 import pyttsx3
+import requests 
 import datetime
 import wikipedia
 import webbrowser 
@@ -13,6 +14,12 @@ import pyjokes
 import psutil
 from pywikihow import WikiHow, search_wikihow
 import speedtest
+import sys
+from gtts import gTTS
+
+from fastapi import FastAPI
+
+
 
 paths={ 
     "notepad" : "C:\\Windows\\notepad.exe",
@@ -37,7 +44,7 @@ def wishMe():
         speak("Good Afternoon sir!")
     else:
         speak("Good Evening sir!")
-    speak("I am Jarvis , how may I help you?")
+    speak("I am Makki , how may I help you?")
 
 def takeCommand():
     r=sr.Recognizer()
@@ -70,13 +77,55 @@ def search_on_google(text):
     kit.search(text)
 def search_wikihow(query,max_results=10,lang='en'):
     return list(WikiHow.search(query,max_results,lang))
+def get_weather(city):
+    api_key = "60780f2ca3d954588691968b80e4145d"  # Replace with your API key
+    base_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "q": city,
+        "appid": api_key,
+        "units": "metric"  # Use "imperial" for Fahrenheit
+    }
+    response = requests.get(base_url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        temperature = data["main"]["temp"]
+        description = data["weather"][0]["description"]
+        weather_info = f"The current temperature in {city} is {temperature}°C with {description}."
+        return weather_info
+    else:
+        return "Sorry, I couldn't fetch the weather information. Please check the city name."
+try:
+    def check_internet_speed():
+        st = speedtest.Speedtest()
+
+        print("Finding best server...")
+        st.get_best_server()
+
+        print("Measuring download speed...")
+        download_speed = st.download() / 1_000_000  # Convert from bits to Mbps
+
+        print("Measuring upload speed...")
+        upload_speed = st.upload() / 1_000_000  # Convert from bits to Mbps
+
+        print("Measuring ping...")
+        ping = st.results.ping
+
+        print(f"Download Speed: {download_speed:.2f} Mbps")
+        print(f"Upload Speed: {upload_speed:.2f} Mbps")
+        print(f"Ping: {ping:.2f} ms")
+except Exception as e:
+    speak("try again")
+
+
+
 
 if __name__ == "__main__":
     wishMe()
 
-    #while True:
-    query=takeCommand().lower()
-    if 1:
+    while True:
+    #if 1:
+        query=takeCommand().lower()
+    
         if 'open google' in query:
             speak("openning google")
             webbrowser.open("google.com")
@@ -124,17 +173,16 @@ if __name__ == "__main__":
         
         
         elif 'how to ' in query:
-            speak("how to do mode is activated !")
             while True:
-                speak("what do you want to know sir !")
                 how=takeCommand()
                 try:
                     if 'exit' in how or 'close' in how or 'quit' in how or 'leave' in how:
                         speak("ok sir! The how to do mode is closed")
+                        sys.close()
                     else:
                         how=takeCommand()
                         max_results = 1
-                        how_to= search_wikihow(how, max_results)
+                        how_to= search_wikihow(how, max_results,lang='en')
                         assert len(how_to)==1
                         how_to[0].print()
                         speak(how_to[0].summary)
@@ -150,19 +198,61 @@ if __name__ == "__main__":
         elif ' tell jokes ' or 'jokes' in query:
             joke = pyjokes.get_joke()
             print(joke)
-            joke = pyjokes.get_joke(language='de')
-            print(joke)
-            joke = pyjokes.get_joke(category='neutral')
-            print(joke)
-        '''while True:
-    command = input("Type 'joke' for a programming joke or 'exit' to quit: ").strip().lower()
-    if command == 'joke':
-        print(pyjokes.get_joke())
-    elif command == 'exit':
-        break
-    else:
-        print("Unknown command. Try 'joke' or 'exit'.")'''
+            speak(joke)
+            if 'exit' in query:
+                sys.close()
+            
+            
 
+        elif 'tell weather ' in query:
+            speak("the current weather is ")
+            w=get_weather()
+            print(w)
+            speak(w)
+
+        elif 'inernet speed ' in query:
+            i = check_internet_speed()
+            speak(i)
+
+        elif 'why' or 'what' or 'where' or 'who' or 'when' in query:
+            w5 = search_on_google()
+            print(w5)
+            speak(w5)
+
+
+'''def set_alarm():
+    # Ask the user for the alarm time in HH:MM format
+    alarm_time = input("Enter the alarm time (HH:MM, 24-hour format): ")
+
+    try:
+        # Parse the alarm time
+        alarm_hour, alarm_minute = map(int, alarm_time.split(":"))
+        print(f"Alarm is set for {alarm_hour:02d}:{alarm_minute:02d}.")
+
+        while True:
+            # Get the current time
+            now = datetime.now()
+            current_hour = now.hour
+            current_minute = now.minute
+
+            # Check if it's time for the alarm
+            if current_hour == alarm_hour and current_minute == alarm_minute:
+                print("Wake up! It's time!")
+                speak("Wake up! It's time!")
+                
+                # Play an alarm sound (Optional)
+                playsound("alarm.mp3")  # Replace "alarm.mp3" with your sound file
+                break
+            
+            # Sleep for 30 seconds before checking again
+            time.sleep(30)
+
+    except ValueError:
+        print("Invalid time format. Please enter in HH:MM format.")
+        speak("Invalid time format. Please enter in HH:MM format.")
+
+if __name__ == "__main__":
+    set_alarm()'''
         
 
         
